@@ -56,12 +56,14 @@ import {Plus} from '@element-plus/icons-vue';
 /*得到countStore*/
 // const demoStore = mainStore()
 
+import {HOST, HOST_PORT, ImageUploadUrl, UserAddUrl} from '@/config.ts'
+
 //进行测试接口调用
 const addUser = () => {
   let formData = new FormData();
   formData.append("username", "12345");
   formData.append("password", "54321");
-  let url = "http://127.0.0.1:5000/add_user"; //访问后端接口的url
+  let url = `http://${HOST}:${HOST_PORT}/${UserAddUrl}`;
   let method = "post";
   axios({
     method,
@@ -97,7 +99,7 @@ const uploadButton = ref(false);
 const fileList = ref([]);
 
 const handleSuccess = () => {
-  // 上传成功后，隐藏上传按钮
+  // Hide the upload button after a successful upload.
   uploadButton.value = true;
 }
 
@@ -139,7 +141,8 @@ const uploadImage = () => {
     console.log(file.raw);
   });
 
-  let url = 'http://127.0.0.1:5000/upload_images' // 访问后端接口的url
+  // Link to access the image upload API
+  let url = `http://${HOST}:${HOST_PORT}/${ImageUploadUrl}`
   let method = 'post'
   axios({
     method,
