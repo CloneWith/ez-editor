@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="main-body">
     <h1 class="head-title">首页</h1>
     <el-alert
       :class="backendReachable ? 'hide-box' : 'show-box'"
@@ -207,22 +207,18 @@ const uploadImage = () => {
   position: relative;
   width: 100vw;
   height: 100vh;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #1a1b1e;
 }
 
 .head-title {
   filter: drop-shadow(0 0 2em #646cffaa);
   margin: 0;
 }
-</style>
 
-<style lang="scss" scoped>
-.main-body {
-  background: #76cfe5;
-}
-</style>
-
-<style scoped>
 .hide-box {
   display: none;
 }
