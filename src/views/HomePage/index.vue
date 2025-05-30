@@ -58,24 +58,41 @@ import {Plus} from '@element-plus/icons-vue';
 
 import {HOST, HOST_PORT, ImageUploadUrl, UserAddUrl} from '@/config.ts'
 
-//进行测试接口调用
-const addUser = () => {
-  let formData = new FormData();
-  formData.append("username", "12345");
-  formData.append("password", "54321");
-  let url = `http://${HOST}:${HOST_PORT}/${UserAddUrl}`;
-  let method = "post";
-  axios({
-    method,
-    url,
-    data: formData,
-  }).then(res => {
-    // alert(res.data)
-    console.log("你好")
-  });
+// Send a test add user request to the server to test the connection.
+const addUser = async (): Promise<boolean> => {
+  let result: boolean = false;
+  const formData = new FormData();
+
+  formData.append('username', '12345');
+  formData.append('password', '54321');
+  const url = `http://${HOST}:${HOST_PORT}/${UserAddUrl}`;
+  const method = 'post';
+
+  try {
+    await axios({
+      method,
+      url,
+      data: formData,
+    });
+
+    result = true;
+  } catch (error) {
+    console.log(error);
+  }
+
+  return result;
 }
 
-addUser();
+const testServer = async () => {
+  const result = await addUser();
+  disabled.value = !result;
+
+  if (!result) {
+    ElMessage.error('服务器连接失败，请稍后重试。');
+  }
+}
+
+testServer();
 
 const dialogImageUrl = ref('')
 const dialogVisible = ref(false)
