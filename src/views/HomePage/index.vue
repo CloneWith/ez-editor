@@ -1,10 +1,17 @@
 <template>
   <div>
     <h1 class="head-title">首页</h1>
+    <el-alert
+      :class="backendReachable ? 'hide-box' : 'show-box'"
+      title="后端服务器连接失败"
+      type="warning"
+      :closable="false"
+      show-icon
+    >
+      将无法上传图片，请稍后再试。
+      <el-button @click="testServer">重试</el-button>
+    </el-alert>
     <div class="upload-image">
-      <!--
-      class="upload-image"
-      -->
       <p>
         <!--
         class="commodity-img"
@@ -88,6 +95,7 @@ const addUser = async (): Promise<boolean> => {
 
 const testServer = async () => {
   const result = await addUser()
+  backendReachable.value = result
   uploadDisabled.value = !result
 
   if (!result) {
@@ -101,6 +109,7 @@ const dialogImageUrl = ref('')
 const dialogVisible = ref(false)
 const uploadInProgress = ref(false)
 const uploadDisabled = ref(false)
+const backendReachable = ref(true)
 
 const handlePictureCardPreview = (file: UploadFile) => {
   dialogImageUrl.value = file.url!
