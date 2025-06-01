@@ -1,12 +1,16 @@
 <template>
   <div class="main-body">
+    <div v-if="userStore.isLoggedIn" class="user-info">
+      <span>欢迎，{{ userStore.userInfo?.username }}</span>
+      <el-button type="text" @click="handleLogout">退出登录</el-button>
+    </div>
     <h1 class="head-title">首页</h1>
     <el-alert
       :class="backendReachable ? 'hide-box' : 'show-box'"
-      title="后端服务器连接失败"
-      type="warning"
       :closable="false"
       show-icon
+      title="后端服务器连接失败"
+      type="warning"
     >
       将无法上传图片，请稍后再试。
       <el-button @click="testServer">重试</el-button>
@@ -26,24 +30,24 @@
           :disabled="uploadDisabled"
           :file-list="fileList"
           :limit="10"
-          :on-remove="handleRemove"
           :on-change="handleChanges"
           :on-error="handleError"
           :on-preview="handlePictureCardPreview"
           :on-progress="handleUploading"
+          :on-remove="handleRemove"
           :on-success="handleSuccess"
           list-type="picture-card"
           multiple
           name="img"
         >
           <el-icon class="avatar-uploader-icon">
-            <Plus />
+            <Plus/>
           </el-icon>
         </el-upload>
       </p>
 
       <el-dialog v-model="dialogVisible">
-        <img :src="dialogImageUrl" alt="Preview Image" class="image-show" w-full />
+        <img :src="dialogImageUrl" alt="Preview Image" class="image-show" w-full/>
       </el-dialog>
     </div>
     <el-button
@@ -60,149 +64,146 @@
 </template>
 
 <script lang="ts" setup>
-import axios from 'axios'
-import { ref } from 'vue'
-import type { UploadFile } from 'element-plus'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, Plus, Upload } from '@element-plus/icons-vue'
+import { ref } from "vue";
+import { useUserStore } from "@/stores/user";
+import type { UploadFile } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Loading, Plus, Upload } from "@element-plus/icons-vue";
 
-import { HOST, HOST_PORT, ImageUploadUrl, UserAddUrl } from '@/config.ts'
+import { ImageUploadUrl, TestUrl } from "@/config.ts";
+import api from "@/utils/api.ts";
 
-// Send a test add user request to the server to test the connection.
-const addUser = async (): Promise<boolean> => {
-  let result: boolean = false
-  const formData = new FormData()
 
-  formData.append('username', '12345')
-  formData.append('password', '54321')
-  const url = `http://${HOST}:${HOST_PORT}/${UserAddUrl}`
-  const method = 'post'
-
-  try {
-    await axios({
-      method,
-      url,
-      data: formData,
-    })
-
-    result = true
-  } catch (error) {
-    console.log(error)
-  }
-
-  return result
-}
+const userStore = useUserStore();
 
 const testServer = async () => {
-  const result = await addUser()
-  backendReachable.value = result
-  uploadDisabled.value = !result
+  let result: boolean = false;
+
+  await api.get(TestUrl).then((res) => {
+    result = res.status === 200;
+  })
+    .catch((error) => {
+      console.error("Exception thrown in connectivity testing:", error);
+    });
+
+  backendReachable.value = result;
+  uploadDisabled.value = !result || !userStore.isLoggedIn;
 
   if (!result) {
-    ElMessage.error('服务器连接失败，请稍后重试。')
+    ElMessage.error("服务器连接失败，请稍后重试。");
   }
-}
+};
 
-testServer()
+testServer();
 
-const dialogImageUrl = ref('')
-const dialogVisible = ref(false)
-const uploadInProgress = ref(false)
-const uploadDisabled = ref(false)
-const backendReachable = ref(true)
+const dialogImageUrl = ref("");
+const dialogVisible = ref(false);
+const uploadInProgress = ref(false);
+const uploadDisabled = ref(false);
+const backendReachable = ref(true);
 
 const handlePictureCardPreview = (file: UploadFile) => {
-  dialogImageUrl.value = file.url!
-  dialogVisible.value = true
-}
+  dialogImageUrl.value = file.url!;
+  dialogVisible.value = true;
+};
 
-const boxDisplay = ref('show-box')
-const submitDisabled = ref(false)
-const fileList = ref<UploadFile[]>([])
+const boxDisplay = ref("show-box");
+const submitDisabled = ref(false);
+const fileList = ref<UploadFile[]>([]);
 
 const handleUploading = () => {
-  submitDisabled.value = true
-  uploadDisabled.value = true
-}
+  submitDisabled.value = true;
+  uploadDisabled.value = true;
+};
 
 const handleSuccess = () => {
   // Hide the upload button after a successful upload.
-  submitDisabled.value = true
-  uploadDisabled.value = false
-}
+  submitDisabled.value = true;
+  uploadDisabled.value = false;
+};
 
 const handleError = () => {
-  ElMessage.error('发生了错误...')
-}
+  ElMessage.error("发生了错误...");
+};
 
 const handleChanges = (file: UploadFile) => {
-  fileList.value.push(file)
-  boxDisplay.value = 'hide-box'
-}
+  fileList.value.push(file);
+  boxDisplay.value = "hide-box";
+};
 
 // Remove the selected files from the list.
 const handleRemove = (file: UploadFile) => {
-  fileList.value = fileList.value.filter((f: UploadFile) => f.uid !== file.uid)
+  fileList.value = fileList.value.filter((f: UploadFile) => f.uid !== file.uid);
   if (fileList.value.length === 0) {
-    boxDisplay.value = 'show-box'
+    boxDisplay.value = "show-box";
   }
-}
+};
 
-const beforeUpload = (file: UploadFile) => {}
+const beforeUpload = (file: UploadFile) => {
+};
 
 // Ask the user before the removal.
 const beforeRemove = () => {
   return new Promise<void>((resolve, reject) => {
-    ElMessageBox.confirm('此操作将删除该图片，是否继续？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
+    ElMessageBox.confirm("此操作将删除该图片，是否继续？", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
     })
       .then(() => {
-        boxDisplay.value = 'show-box'
-        resolve()
+        boxDisplay.value = "show-box";
+        resolve();
       })
-      .catch(() => {
-        reject(false)
-      })
-  })
-}
+      .catch((error) => {
+        console.error(error);
+        reject(false);
+      });
+  });
+};
+
+const handleLogout = () => {
+  userStore.logout();
+};
 
 const uploadImage = () => {
-  const formData = new FormData()
+  if (!userStore.isLoggedIn) return;
+
+  const formData = new FormData();
   // 遍历fileList 为每个文件创建个新的表单字段
-  formData.append('username', '12345')
+  formData.append("username", "12345");
   fileList.value.forEach((file: UploadFile) => {
-    formData.append('file', file.raw!)
-    console.log(file.raw)
-  })
+    formData.append("file", file.raw!);
+    console.log(file.raw);
+  });
 
   // Link to access the image upload API
-  const url = `http://${HOST}:${HOST_PORT}/${ImageUploadUrl}`
-  const method = 'post'
-  axios({
-    method,
-    url,
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data', // 确保设置了正确的 Content-Type
-    },
-  }).then(() => {
+  api.postForm(ImageUploadUrl, formData).then(() => {
     return new Promise<void>((resolve, reject) => {
       try {
-        resolve()
-        fileList.value = []
-        submitDisabled.value = false
-        ElMessage({ message: '图片上传成功', type: 'success' })
-      } catch (_) {
-        reject(false)
+        resolve();
+        fileList.value = [];
+        submitDisabled.value = false;
+        ElMessage({message: "图片上传成功", type: "success"});
+      } catch (error) {
+        console.error(error);
+        reject(false);
       }
-    })
-  })
-}
+    });
+  });
+};
 </script>
 
 <style scoped>
+.user-info {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .main-body {
   position: relative;
   width: 100vw;
