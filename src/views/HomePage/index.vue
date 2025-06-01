@@ -169,14 +169,11 @@ const uploadImage = () => {
   if (!userStore.isLoggedIn) return;
 
   const formData = new FormData();
-  // 遍历fileList 为每个文件创建个新的表单字段
-  formData.append("username", "12345");
   fileList.value.forEach((file: UploadFile) => {
     formData.append("file", file.raw!);
     console.log(file.raw);
   });
 
-  // Link to access the image upload API
   api.postForm(ImageUploadUrl, formData).then(() => {
     return new Promise<void>((resolve, reject) => {
       try {
