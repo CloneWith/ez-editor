@@ -5,6 +5,14 @@
       <el-container class="editor_card">
         <el-header class="top_toolbar" height="auto">
           <EditorMenu :editor="editor"/>
+          <el-button :disabled="historyString === ''" :loading="aiLoading" icon="Brush"
+                     @click="polish">
+            润色
+          </el-button>
+          <el-button :disabled="historyString === ''" :loading="aiLoading" icon="EditPen"
+                     @click="continuation">
+            续写
+          </el-button>
         </el-header>
         <bubble-menu
           v-if="editor"
@@ -35,8 +43,7 @@
         <el-main class="edit_content">
           <editor-content
             :editor="editor"
-            @mousemove="onMouseMove()"
-            @mouseup="onTextSelection($event)"
+            @select="onTextSelection"
           />
         </el-main>
 
@@ -94,13 +101,7 @@ const aiLoading = ref(false);
 const aiPolishContent = ref("");
 const aiContinuationContent = ref("");
 const fileContent = ref(null);
-
-const position = ref({
-  top: 0,
-  left: 0,
-});
-const mouseMoved = ref(false);
-let historyString: string;
+const historyString = ref("");
 let selection: any;
 
 // Use AI for text polishment
@@ -112,9 +113,12 @@ const polish = () => {
     console.log(res.data);
     const tpcard1 = {title: "AI润色", cont: historyString, review: res.data};
     aiList.value.push(tpcard1);
-    navigator.clipboard.writeText(res.data);
-    aiPolishContent.value = res.data.answer;
-    ElMessageBox.prompt(res.data.answer, "AI润色");
+
+    if (res.data.answer) {
+      aiPolishContent.value = res.data.answer;
+      ElMessageBox.alert(res.data.answer, "AI润色");
+    }
+
     aiLoading.value = false;
   }).then((err) => {
     console.error("Error getting continuation", err);
@@ -130,8 +134,12 @@ const continuation = () => {
     cont: historyString,
   }).then((res) => {
     console.log(res.data);
-    aiContinuationContent.value = res.data.answer;
-    ElMessageBox.prompt(res.data.answer, "AI续写");
+
+    if (res.data.answer) {
+      aiContinuationContent.value = res.data.answer;
+      ElMessageBox.alert(res.data.answer, "AI续写");
+    }
+
     aiLoading.value = false;
   }).catch((err) => {
     console.error("Error getting continuation", err);
@@ -140,22 +148,16 @@ const continuation = () => {
   });
 };
 
-const onTextSelection = (e: MouseEvent) => {
+const onTextSelection = () => {
   selection = window.getSelection();
   if (selection != null && historyString != selection) {
     const content = selection.toString();
     if (content != "" && fileContent.value != null) {
-      position.value.top = e.clientY;
-      position.value.left = e.clientX;
-      historyString = content;
+      historyString.value = content;
     }
   } else {
-    historyString = "";
+    historyString.value = "";
   }
-};
-
-const onMouseMove = () => {
-  mouseMoved.value = true;
 };
 
 const editorStore = useEditorStore();
@@ -227,6 +229,9 @@ const editor = useEditor({
   onCreate() {
     loadHeadings();
     editorStore.setEditorInstance(editor.value);
+  },
+  onSelectionUpdate() {
+    onTextSelection();
   },
   injectCSS: false,
 });
