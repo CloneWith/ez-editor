@@ -1,5 +1,5 @@
 <template>
-  <button
+  <el-button
     class="menu-item"
     :class="{ 'is-active': props.isActive ? props.isActive() : null }"
     @click="props.action"
@@ -8,7 +8,7 @@
     <svg class="remix">
        <use :xlink:href="`${remixiconUrl}#ri-${props.icon}`"/>
     </svg>
-  </button>
+  </el-button>
 </template>
 
 <script setup lang="ts">
@@ -27,22 +27,13 @@ const props = defineProps<{
   background: transparent;
   border: none;
   border-radius: 0.4rem;
-  color: #333;
-  cursor: pointer;
-  height: 1.75rem;
-  padding: 0.25rem;
-  margin-right: 0.25rem;
-  width: 1.75rem;
+  height: 28px;
+  width: 28px;
 
   svg {
     fill: currentColor;
-    height: 100%;
-    width: 100%;
-  }
-
-  &.is-active,
-  &:hover {
-    background-color: #d6d6d6;
+    height: 24px;
+    width: 24px;
   }
 }
 </style>
