@@ -15,18 +15,33 @@ export const useUserStore = defineStore('user', () => {
       })
 
       const data = response.data
-      isLoggedIn.value = true
-      userInfo.value = data.user
-      token.value = data.token
 
-      // Store auth data in localStorage
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('userInfo', JSON.stringify(data.user))
+      if (data.success) {
+        isLoggedIn.value = true
+        userInfo.value = data.user
+        token.value = data.token
 
-      return true
+        // Store auth data in localStorage
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('userInfo', JSON.stringify(data.user))
+
+        return {
+          success: true,
+          reason: "",
+        }
+      }
+      else {
+        return {
+          success: false,
+          reason: "用户名或密码错误",
+        }
+      }
     } catch (error) {
       console.error('Login error:', error)
-      return false
+      return {
+        success: false,
+        reason: "服务器错误",
+      }
     }
   }
 

@@ -2,7 +2,7 @@
   <div class="login-container">
     <h2>登录</h2>
     <el-space direction="vertical" fill>
-      <el-alert v-if="message" :type="alertType">{{ message }}</el-alert>
+      <el-alert v-if="message" :type="alertType" show-icon>{{ message }}</el-alert>
       <el-form @submit.prevent="handleSubmit">
         <el-form-item label="用户名">
           <el-input
@@ -52,8 +52,8 @@ async function handleSubmit() {
   try {
     loading.value = true;
     message.value = "";
-    const success = await userStore.login(username.value, password.value);
-    if (success) {
+    const result = await userStore.login(username.value, password.value);
+    if (result.success) {
       // Get the redirect destination
       const redirectPath = router.currentRoute.value.query.redirect || "/";
 
@@ -65,7 +65,7 @@ async function handleSubmit() {
     } else {
       setTimeout(() => {
         alertType.value = "error";
-        message.value = "用户名或密码错误";
+        message.value = `登录失败：${result.reason}`;
         loading.value = false;
       }, 3000);
     }

@@ -2,7 +2,7 @@
   <div class="register-container">
     <h2>注册</h2>
     <el-space direction="vertical" fill>
-      <el-alert v-if="message" :type="alertType">{{ message }}</el-alert>
+      <el-alert v-if="message" :type="alertType" show-icon>{{ message }}</el-alert>
       <el-form @submit.prevent="handleSubmit">
         <el-form-item label="用户名">
           <el-input
@@ -56,12 +56,20 @@ async function handleSubmit() {
       password: password.value,
     });
 
-    if (response.status === 200) {
+    if (response.data.success) {
       alertType.value = "success";
       message.value = "注册成功，转到登录界面...";
       setTimeout(async () => {
         await router.push(`/${LoginUrl}`);
       }, 1000);
+    }
+    else
+    {
+      alertType.value = "error";
+      message.value = `注册失败：${response.data.message}`;
+      setTimeout(() => {
+        loading.value = false;
+      }, 3000);
     }
   } catch (err) {
     alertType.value = "error";
