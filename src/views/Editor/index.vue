@@ -24,10 +24,10 @@
                     @click="editor.chain().focus().toggleStrike().run()">
               Strike
             </button>
-            <el-button class="item" @click="polish()" icon="Brush">
+            <el-button class="item" icon="Brush" @click="polish()">
               润色
             </el-button>
-            <el-icon class="item" @click="continuation()" icon="EditPen">
+            <el-icon class="item" icon="EditPen" @click="continuation()">
               续写
             </el-icon>
           </div>
@@ -69,6 +69,8 @@ import BulletList from "@tiptap/extension-bullet-list";
 import Highlight from "@tiptap/extension-highlight";
 import CharacterCount from "@tiptap/extension-character-count";
 
+import { ElMessage, ElMessageBox } from "element-plus";
+
 // Code Highlight
 import css from "highlight.js/lib/languages/css";
 import js from "highlight.js/lib/languages/javascript";
@@ -80,8 +82,9 @@ import EditorMenu from "./EditorMenu/index.vue";
 import Outline from "./Outline/index.vue";
 
 import { useEditorStore } from "@/stores/editor";
-import axios from "axios";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
+import api from "@/utils/api.ts";
+import { GetContinuationUrl, GetPolishUrl } from "@/config.ts";
 
 const lowlight = createLowlight();
 lowlight.register({html, ts, css, js});
@@ -103,21 +106,19 @@ let selection: any;
 // Use AI for text polishment
 const polish = () => {
   aiLoading.value = true;
-  const formData = new FormData();
-  formData.append("username", "123456");
-  formData.append("cont", historyString);
-  const url = "http://127.0.0.1:5000/get_polish"; //访问后端接口的url
-  const method = "post";
-  axios({
-    method,
-    url,
-    data: formData,
+  api.postForm(GetPolishUrl, {
+    cont: historyString,
   }).then((res) => {
     console.log(res.data);
-    const tpcard1 = {title: "ai辅助评审", cont: historyString, review: res.data};
+    const tpcard1 = {title: "AI润色", cont: historyString, review: res.data};
     aiList.value.push(tpcard1);
     navigator.clipboard.writeText(res.data);
-    // showMessage()
+    aiPolishContent.value = res.data.answer;
+    ElMessageBox.prompt(res.data.answer, "AI润色");
+    aiLoading.value = false;
+  }).then((err) => {
+    console.error("Error getting continuation", err);
+    ElMessage.error("获取润色结果失败...");
     aiLoading.value = false;
   });
 };
@@ -125,20 +126,16 @@ const polish = () => {
 // Use AI for text continuation
 const continuation = () => {
   aiLoading.value = true;
-  const formData = new FormData();
-
-  // TODO: Integrate with backend API
-  formData.append("username", "123456");
-  formData.append("key", "xxxxxxx");
-  formData.append("cont", historyString);
-  const url = "http://127.0.0.1:5000/getpolish"; //访问后端接口的url
-  const method = "post";
-  axios({
-    method,
-    url,
-    data: formData,
+  api.postForm(GetContinuationUrl, {
+    cont: historyString,
   }).then((res) => {
     console.log(res.data);
+    aiContinuationContent.value = res.data.answer;
+    ElMessageBox.prompt(res.data.answer, "AI续写");
+    aiLoading.value = false;
+  }).catch((err) => {
+    console.error("Error getting continuation", err);
+    ElMessage.error("获取续写结果失败...");
     aiLoading.value = false;
   });
 };
@@ -153,7 +150,7 @@ const onTextSelection = (e: MouseEvent) => {
       historyString = content;
     }
   } else {
-    historyString = "如何阐释我们的梦想？这一直是一个棘手的问题";
+    historyString = "";
   }
 };
 
@@ -173,7 +170,6 @@ const loadHeadings = () => {
       console.log(pos, node);
       const start = pos;
       const end = pos + node.content.size;
-      // const end = pos + node
       const id = `heading-${headings.length + 1}`;
       if (node.attrs.id !== id) {
         transaction?.setNodeMarkup(pos, undefined, {
@@ -483,73 +479,5 @@ b {
 
 .resize-cursor {
   cursor: ew-resize;
-}
-
-.contextmenu {
-  width: 120px;
-  margin: 0;
-  background: #fff;
-  z-index: 3000;
-  position: absolute;
-  list-style-type: none;
-  padding: 5px 5px 5px 15px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 400;
-  color: #333;
-  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.3);
-  display: grid;
-  grid-template-columns: 50% 50%;
-}
-
-.contextmenu .item {
-  height: 35px;
-  width: 100%;
-  line-height: 35px;
-  color: rgb(29, 33, 41);
-  cursor: pointer;
-}
-
-.contextmenu .item {
-  height: 35px;
-  width: 100%;
-  line-height: 35px;
-  color: rgb(29, 33, 41);
-  cursor: pointer;
-}
-
-.contextmenu .item:hover {
-  background: rgb(229, 230, 235);
-}
-</style>
-
-<style lang="less" scoped>
-.contextmenu {
-  width: 180px;
-  margin: 0;
-  background: #fff;
-  z-index: 3000;
-  position: absolute;
-  list-style-type: none;
-  padding: 5px 5px 5px 15px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 400;
-  color: #333;
-  box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.3);
-  display: grid;
-  grid-template-columns: 50% 50%;
-
-  .item {
-    height: 35px;
-    width: 100%;
-    line-height: 35px;
-    color: rgb(29, 33, 41);
-    cursor: pointer;
-  }
-
-  .item:hover {
-    background: rgb(229, 230, 235);
-  }
 }
 </style>
