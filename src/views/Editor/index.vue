@@ -1,205 +1,185 @@
 <template>
-  <div class="EditMain" ref="fileContent" @mousedown="hideMenu()">
-    <ul
-      @mousedown="showMenu()"
-      v-show="menuVisible"
-      :style="{
-        left: position.left + 'px',
-        top: position.top + 'px',
-        display: menuVisible ? 'grid' : 'none',
-      }"
-      class="contextmenu"
-    >
-      <li class="item" @click="polish()">
-        <el-icon>
-          <Brush />
-        </el-icon>
-        润色
-      </li>
-      <li class="item" @click="continuation()">
-        <el-icon>
-          <EditPen />
-        </el-icon>
-        续写
-      </li>
-    </ul>
-    <div class="left_sidebar"></div>
-    <div class="editor">
-      <div class="editor_card">
-        <div class="top_toolbar">
-          <EditorMenu :editor="editor" />
-        </div>
-        <div class="edit_content">
-          <EditorContent
-            @scroll="onScroll()"
-            @mousedown="hideMenu()"
+  <el-container ref="fileContent" class="main">
+    <el-aside class="sidebar"></el-aside>
+    <el-main class="editor">
+      <el-container class="editor_card">
+        <el-header class="top_toolbar" height="auto">
+          <EditorMenu :editor="editor"/>
+        </el-header>
+        <bubble-menu
+          v-if="editor"
+          :editor="editor"
+          :tippy-options="{ duration: 100 }"
+        >
+          <div class="bubble-menu">
+            <button :class="{ 'is-active': editor.isActive('bold') }"
+                    @click="editor.chain().focus().toggleBold().run()">
+              Bold
+            </button>
+            <button :class="{ 'is-active': editor.isActive('italic') }"
+                    @click="editor.chain().focus().toggleItalic().run()">
+              Italic
+            </button>
+            <button :class="{ 'is-active': editor.isActive('strike') }"
+                    @click="editor.chain().focus().toggleStrike().run()">
+              Strike
+            </button>
+            <el-button class="item" @click="polish()" icon="Brush">
+              润色
+            </el-button>
+            <el-icon class="item" @click="continuation()" icon="EditPen">
+              续写
+            </el-icon>
+          </div>
+        </bubble-menu>
+        <el-main class="edit_content">
+          <editor-content
+            :editor="editor"
             @mousemove="onMouseMove()"
             @mouseup="onTextSelection($event)"
-            style="padding: 8px; overflow-y: auto"
-            :editor="editor"
           />
-        </div>
+        </el-main>
 
-        <div class="bottom_bar">
+        <el-footer class="bottom_bar">
           字数统计:
           {{ editor?.storage.characterCount.characters() }}
-        </div>
-      </div>
-    </div>
-
-    <div class="right_sidebar">
-      <Outline></Outline>
-    </div>
-  </div>
+        </el-footer>
+      </el-container>
+    </el-main>
+    <el-aside class="sidebar">
+      <Outline/>
+    </el-aside>
+  </el-container>
 </template>
 
 <script lang="ts" setup>
-import { Brush, EditPen } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { ref } from "vue";
 
 // TipTap editor and extensions
-import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { EditorContent, useEditor } from "@tiptap/vue-3";
 
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import TaskItem from '@tiptap/extension-task-item'
-import TaskList from '@tiptap/extension-task-list'
-import Underline from '@tiptap/extension-underline'
-import ListItem from '@tiptap/extension-list-item'
-import OrderedList from '@tiptap/extension-ordered-list'
-import BulletList from '@tiptap/extension-bullet-list'
-import Highlight from '@tiptap/extension-highlight'
-import CharacterCount from '@tiptap/extension-character-count'
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+import Underline from "@tiptap/extension-underline";
+import ListItem from "@tiptap/extension-list-item";
+import OrderedList from "@tiptap/extension-ordered-list";
+import BulletList from "@tiptap/extension-bullet-list";
+import Highlight from "@tiptap/extension-highlight";
+import CharacterCount from "@tiptap/extension-character-count";
 
 // Code Highlight
-import css from 'highlight.js/lib/languages/css'
-import js from 'highlight.js/lib/languages/javascript'
-import ts from 'highlight.js/lib/languages/typescript'
-import html from 'highlight.js/lib/languages/xml'
-import { createLowlight } from 'lowlight'
+import css from "highlight.js/lib/languages/css";
+import js from "highlight.js/lib/languages/javascript";
+import ts from "highlight.js/lib/languages/typescript";
+import html from "highlight.js/lib/languages/xml";
+import { createLowlight } from "lowlight";
 
-import EditorMenu from './EditorMenu/index.vue'
-import Outline from './Outline/index.vue'
+import EditorMenu from "./EditorMenu/index.vue";
+import Outline from "./Outline/index.vue";
 
-import { useEditorStore } from '@/stores/editor'
-import axios from 'axios'
+import { useEditorStore } from "@/stores/editor";
+import axios from "axios";
+import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 
-const lowlight = createLowlight()
-lowlight.register({ html, ts, css, js })
+const lowlight = createLowlight();
+lowlight.register({html, ts, css, js});
 
-const aiList = ref([])
-const aiLoading = ref(false)
-const aiPolishContent = ref('')
-const aiContinuationContent = ref('')
-const fileContent = ref(null)
+const aiList = ref([]);
+const aiLoading = ref(false);
+const aiPolishContent = ref("");
+const aiContinuationContent = ref("");
+const fileContent = ref(null);
 
-const menuVisible = ref(false)
 const position = ref({
   top: 0,
   left: 0,
-})
-const mouseMoved = ref(false)
-let historyString: string
-let selection: any
+});
+const mouseMoved = ref(false);
+let historyString: string;
+let selection: any;
 
 // Use AI for text polishment
 const polish = () => {
-  aiLoading.value = true
-  menuVisible.value = false
-  const formData = new FormData()
-  formData.append('username', '123456')
-  formData.append('key', 'xxxxxxx')
-  formData.append('cont', historyString)
-  const url = 'http://127.0.0.1:5000/getpolish' //访问后端接口的url
-  const method = 'post'
+  aiLoading.value = true;
+  const formData = new FormData();
+  formData.append("username", "123456");
+  formData.append("cont", historyString);
+  const url = "http://127.0.0.1:5000/get_polish"; //访问后端接口的url
+  const method = "post";
   axios({
     method,
     url,
     data: formData,
   }).then((res) => {
-    console.log(res.data)
-    const tpcard1 = { title: 'ai辅助评审', cont: historyString, review: res.data }
-    aiList.value.push(tpcard1)
-    navigator.clipboard.writeText(res.data)
+    console.log(res.data);
+    const tpcard1 = {title: "ai辅助评审", cont: historyString, review: res.data};
+    aiList.value.push(tpcard1);
+    navigator.clipboard.writeText(res.data);
     // showMessage()
-    aiLoading.value = false
-  })
-}
+    aiLoading.value = false;
+  });
+};
 
 // Use AI for text continuation
 const continuation = () => {
-  aiLoading.value = true
-  menuVisible.value = false
-  const formData = new FormData()
+  aiLoading.value = true;
+  const formData = new FormData();
 
   // TODO: Integrate with backend API
-  formData.append('username', '123456')
-  formData.append('key', 'xxxxxxx')
-  formData.append('cont', historyString)
-  const url = 'http://127.0.0.1:5000/getpolish' //访问后端接口的url
-  const method = 'post'
+  formData.append("username", "123456");
+  formData.append("key", "xxxxxxx");
+  formData.append("cont", historyString);
+  const url = "http://127.0.0.1:5000/getpolish"; //访问后端接口的url
+  const method = "post";
   axios({
     method,
     url,
     data: formData,
   }).then((res) => {
-    console.log(res.data)
-    aiLoading.value = false
-  })
-}
+    console.log(res.data);
+    aiLoading.value = false;
+  });
+};
 
 const onTextSelection = (e: MouseEvent) => {
-  selection = window.getSelection()
+  selection = window.getSelection();
   if (selection != null && historyString != selection) {
-    const content = selection.toString()
-    if (content != '' && fileContent.value != null) {
-      menuVisible.value = true
-
-      position.value.top = e.clientY
-      position.value.left = e.clientX
-      historyString = content
+    const content = selection.toString();
+    if (content != "" && fileContent.value != null) {
+      position.value.top = e.clientY;
+      position.value.left = e.clientX;
+      historyString = content;
     }
   } else {
-    historyString = ''
+    historyString = "如何阐释我们的梦想？这一直是一个棘手的问题";
   }
-}
+};
 
 const onMouseMove = () => {
-  mouseMoved.value = true
-}
+  mouseMoved.value = true;
+};
 
-const hideMenu = () => {
-  menuVisible.value = false
-}
-
-const showMenu = () => {
-  menuVisible.value = true
-}
-
-const onScroll = () => {
-  menuVisible.value = false
-  // window.getSelection().removeAllRanges()
-}
-
-const editorStore = useEditorStore()
+const editorStore = useEditorStore();
 // 加载headings
 const loadHeadings = () => {
-  const headings = [] as any[]
-  if (!editor.value) return
-  const transaction = editor.value.state.tr
-  if (!transaction) return
+  const headings = [] as any[];
+  if (!editor.value) return;
+  const transaction = editor.value.state.tr;
+  if (!transaction) return;
   editor.value?.state.doc.descendants((node, pos) => {
-    if (node.type.name === 'heading') {
-      console.log(pos, node)
-      const start = pos
-      const end = pos + node.content.size
+    if (node.type.name === "heading") {
+      console.log(pos, node);
+      const start = pos;
+      const end = pos + node.content.size;
       // const end = pos + node
-      const id = `heading-${headings.length + 1}`
+      const id = `heading-${headings.length + 1}`;
       if (node.attrs.id !== id) {
         transaction?.setNodeMarkup(pos, undefined, {
           ...node.attrs,
           id,
-        })
+        });
       }
 
       headings.push({
@@ -208,16 +188,16 @@ const loadHeadings = () => {
         start,
         end,
         id,
-      })
+      });
     }
-  })
+  });
 
-  transaction?.setMeta('addToHistory', false)
-  transaction?.setMeta('preventUpdate', true)
+  transaction?.setMeta("addToHistory", false);
+  transaction?.setMeta("preventUpdate", true);
 
-  editor.value?.view.dispatch(transaction)
-  editorStore.setHeadings(headings)
-}
+  editor.value?.view.dispatch(transaction);
+  editorStore.setHeadings(headings);
+};
 
 // 使用ref创建可变的响应式引用
 // 编辑器初始化
@@ -229,6 +209,7 @@ const editor = useEditor({
         levels: [1, 2, 3, 4, 5],
       },
     }),
+    BubbleMenu,
     Underline,
     TaskList,
     TaskItem,
@@ -244,38 +225,34 @@ const editor = useEditor({
     }),
   ],
   onUpdate() {
-    loadHeadings()
-    editorStore.setEditorInstance(editor.value)
+    loadHeadings();
+    editorStore.setEditorInstance(editor.value);
   },
   onCreate() {
-    loadHeadings()
-    editorStore.setEditorInstance(editor.value)
+    loadHeadings();
+    editorStore.setEditorInstance(editor.value);
   },
   injectCSS: false,
-})
+});
 
 </script>
 
 <style>
-.EditMain {
-  position: relative;
-  width: 100vw;
+.main {
   height: 100vh;
-
-  display: grid;
-  grid-template-columns: 20% 60% 20%;
+  align-content: center;
+  overflow: hidden;
 }
 
-.left_sidebar {
-  background-color: rgb(111 118 177 / 60%);
+.sidebar {
   height: 100%;
-  width: 100%;
+  width: 20%;
+  min-width: 64px;
 }
 
-.right_sidebar {
-  background-color: rgb(206 226 117);
+.editor {
   height: 100%;
-  width: 100%;
+  min-width: 300px;
 }
 
 .editor_card {
@@ -285,18 +262,18 @@ const editor = useEditor({
   left: 2.5%;
   top: 2.5%;
   display: grid;
-  grid-template-rows: 5% 92% 3%;
+  grid-template-rows: auto 90% auto;
   border: 1px solid #4f5c5765;
 }
 
 .top_toolbar {
-  background-color: rgba(207, 220, 245, 0.199);
   border-bottom: 1px dashed #9ca19f65;
+  align-content: center;
 }
 
 .bottom_bar {
-  background-color: rgba(207, 220, 245, 0.199);
   border-top: 1px dashed #9ca19f65;
+  min-height: 32px;
   height: 100%;
   width: 100%;
   display: grid;
@@ -310,7 +287,31 @@ const editor = useEditor({
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+}
+
+/* Bubble menu */
+.bubble-menu {
+  background-color: white;
+  border: 1px solid gray;
+  border-radius: 0.7rem;
+  display: flex;
+  padding: 0.2rem;
+
+  button {
+    background-color: unset;
+
+    &:hover {
+      background-color: #333333;
+    }
+
+    &.is-active {
+      background-color: #5289f6;
+
+      &:hover {
+        background-color: #067adb;
+      }
+    }
+  }
 }
 </style>
 
