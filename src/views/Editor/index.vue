@@ -118,6 +118,7 @@ const saveTimer = ref<NodeJS.Timeout>();
 const saving = ref(false);
 const saveSuccessful = ref(true);
 const overrideDialogVisible = ref(false);
+const allowOverride = ref(false);
 
 const userDocuments = ref<string[]>([]);
 const currentDocument = ref("");
@@ -212,6 +213,15 @@ const saveEditorContent = () => {
 };
 
 const loadDocument = (title: string) => {
+  if ((saveSuccessful.value === false || saving.value === true) && !allowOverride.value) {
+    ElMessage.warning("当前文档未保存，请在保存后再试。3秒内再次点击可忽略此警告并强制加载。");
+    allowOverride.value = true;
+    setTimeout(() => {
+      allowOverride.value = false;
+    }, 3000);
+    return;
+  }
+
   api.get(GetDocumentUrl, {
     params: {
       title: title,
@@ -220,13 +230,15 @@ const loadDocument = (title: string) => {
     if (res.data.success === true) {
       editor.value?.commands.setContent(res.data.content);
       documentTitle.value = res.data.title;
+
+      saveSuccessful.value = true;
+      saving.value = false;
       loadHeadings();
+
+      if (allowOverride.value)
+        allowOverride.value = false;
     } else {
       ElMessage.error("文档加载失败...");
-    }
-
-    if (saveSuccessful.value === false || saving.value === true) {
-      ElMessageBox.alert(res.data.message, "AI<UNK>");
     }
   });
 };
