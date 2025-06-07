@@ -14,32 +14,6 @@
             续写
           </el-button>
         </el-header>
-        <bubble-menu
-          v-if="editor"
-          :editor="editor"
-          :tippy-options="{ duration: 100 }"
-        >
-          <div class="bubble-menu">
-            <button :class="{ 'is-active': editor.isActive('bold') }"
-                    @click="editor.chain().focus().toggleBold().run()">
-              Bold
-            </button>
-            <button :class="{ 'is-active': editor.isActive('italic') }"
-                    @click="editor.chain().focus().toggleItalic().run()">
-              Italic
-            </button>
-            <button :class="{ 'is-active': editor.isActive('strike') }"
-                    @click="editor.chain().focus().toggleStrike().run()">
-              Strike
-            </button>
-            <el-button class="item" icon="Brush" @click="polish()">
-              润色
-            </el-button>
-            <el-icon class="item" icon="EditPen" @click="continuation()">
-              续写
-            </el-icon>
-          </div>
-        </bubble-menu>
         <el-main class="edit_content">
           <editor-content
             :editor="editor"
@@ -331,31 +305,6 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   height: 100%;
-}
-
-/* Bubble menu */
-.bubble-menu {
-  background-color: white;
-  border: 1px solid gray;
-  border-radius: 0.7rem;
-  display: flex;
-  padding: 0.2rem;
-
-  button {
-    background-color: unset;
-
-    &:hover {
-      background-color: #333333;
-    }
-
-    &.is-active {
-      background-color: #5289f6;
-
-      &:hover {
-        background-color: #067adb;
-      }
-    }
-  }
 }
 </style>
 
