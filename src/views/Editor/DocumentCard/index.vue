@@ -24,7 +24,6 @@ const emit = defineEmits<{
 }>();
 
 const handleClick = () => {
-  console.log("Clicked document:", props.text);
   emit('click', props.text);
 };
 </script>

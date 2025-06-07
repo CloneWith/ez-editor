@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: () => import("../views/HomePage/index.vue"),
+      component: () => import("@/views/ImageUpload/index.vue"),
       meta: {requiresAuth: true},
     },
     {
@@ -18,7 +18,7 @@ const router = createRouter({
     {
       path: "/upload",
       name: "upload",
-      component: () => import("../views/HomePage/index.vue"),
+      component: () => import("@/views/ImageUpload/index.vue"),
       meta: {requiresAuth: true},
     },
     {

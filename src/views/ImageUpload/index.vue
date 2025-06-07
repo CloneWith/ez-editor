@@ -17,12 +17,6 @@
     </el-alert>
     <div class="upload-image">
       <p>
-        <!--
-        class="commodity-img"
-        -->
-        <!--上传图片
-            class="box-display"
-        -->
         <el-upload
           :auto-upload="false"
           :before-remove="beforeRemove"
@@ -50,16 +44,25 @@
         <img :src="dialogImageUrl" alt="Preview Image" class="image-show" w-full/>
       </el-dialog>
     </div>
-    <el-button
-      :disabled="submitDisabled || fileList.length == 0"
-      :icon="Upload"
-      :loading="uploadInProgress"
-      :loading-icon="Loading"
-      type="primary"
-      @click="uploadImage"
-    >
-      上传图片
-    </el-button>
+    <div class="buttons">
+      <el-button
+        :disabled="submitDisabled || fileList.length == 0"
+        :icon="Upload"
+        :loading="uploadInProgress"
+        :loading-icon="Loading"
+        type="primary"
+        @click="uploadImage"
+      >
+        上传图片
+      </el-button>
+      <el-button
+        :disabled="submitDisabled || fileList.length == 0 || editorStore.editorInstance === undefined"
+        :icon="EditPen"
+        @click="uploadImage(insertImageToEditor)"
+      >
+        插入编辑器
+      </el-button>
+    </div>
   </div>
 </template>
 
@@ -68,13 +71,17 @@ import { ref } from "vue";
 import { useUserStore } from "@/stores/user";
 import type { UploadFile } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Loading, Plus, Upload } from "@element-plus/icons-vue";
+import { EditPen, Loading, Plus, Upload } from "@element-plus/icons-vue";
 
 import { ImageUploadUrl, TestUrl } from "@/config.ts";
 import api from "@/utils/api.ts";
+import { useImageStore } from "@/stores/image.ts";
+import { useEditorStore } from "@/stores/editor.ts";
 
 
 const userStore = useUserStore();
+const imageStore = useImageStore();
+const editorStore = useEditorStore();
 
 const testServer = async () => {
   let result: boolean = false;
@@ -165,7 +172,7 @@ const handleLogout = () => {
   userStore.logout();
 };
 
-const uploadImage = () => {
+const uploadImage = (onSuccess: (Function | undefined) = undefined) => {
   if (!userStore.isLoggedIn) return;
 
   const formData = new FormData();
@@ -174,7 +181,12 @@ const uploadImage = () => {
     console.log(file.raw);
   });
 
-  api.postForm(ImageUploadUrl, formData).then(() => {
+  api.postForm(ImageUploadUrl, formData).then((res) => {
+    imageStore.addImage(res.data.url);
+
+    if (onSuccess !== undefined)
+      onSuccess();
+
     return new Promise<void>((resolve, reject) => {
       try {
         resolve();
@@ -187,6 +199,22 @@ const uploadImage = () => {
       }
     });
   });
+};
+
+const insertImageToEditor = () => {
+  if (editorStore.editorInstance === undefined)
+    return;
+
+  imageStore.uploadedImages.forEach((src: string) => {
+    editorStore.editorInstance.commands.insertContent({
+      type: "image",
+      attrs: {
+        src: src,
+      },
+    });
+  });
+
+  imageStore.uploadedImages.value = [];
 };
 </script>
 
@@ -203,13 +231,15 @@ const uploadImage = () => {
 
 .main-body {
   position: relative;
-  width: 100vw;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #1a1b1e;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: row;
 }
 
 .head-title {
