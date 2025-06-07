@@ -1,5 +1,15 @@
 <template>
   <el-container ref="fileContent" class="main">
+
+    <!-- 图片上传对话框 -->
+    <el-dialog
+      v-model="uploadDialogVisible"
+      custom-class="upload-dialog"
+      title="上传图片"
+      width="60%"
+    >
+      <HomePage/>
+    </el-dialog>
     <el-aside class="sidebar">
       <h2>文档列表</h2>
       <DocumentCard v-for="(item, index) in userDocuments.values()" :key="index" :text="item"
@@ -16,6 +26,14 @@
           <el-button :disabled="historyString === ''" :loading="aiLoading" icon="EditPen"
                      @click="continuation">
             续写
+          </el-button>
+          <el-button
+            :icon="Upload"
+            class="upload-btn"
+            type="primary"
+            @click="uploadDialogVisible = true"
+          >
+            上传图片
           </el-button>
         </el-header>
 
@@ -64,6 +82,8 @@
 
 <script lang="ts" setup>
 import { onBeforeUnmount, ref } from "vue";
+import { Upload } from "@element-plus/icons-vue";
+import HomePage from "@/views/ImageUpload/index.vue";
 
 // TipTap editor and extensions
 import { EditorContent, useEditor } from "@tiptap/vue-3";
@@ -78,6 +98,7 @@ import OrderedList from "@tiptap/extension-ordered-list";
 import BulletList from "@tiptap/extension-bullet-list";
 import Highlight from "@tiptap/extension-highlight";
 import CharacterCount from "@tiptap/extension-character-count";
+import Image from '@tiptap/extension-image'
 
 import { ElDialog, ElMessage, ElMessageBox } from "element-plus";
 
@@ -91,8 +112,6 @@ import { createLowlight } from "lowlight";
 import EditorMenu from "./EditorMenu/index.vue";
 import Outline from "./Outline/index.vue";
 import DocumentCard from "./DocumentCard/index.vue";
-
-import { useEditorStore } from "@/stores/editor";
 import api from "@/utils/api.ts";
 import {
   DocumentUploadUrl,
@@ -102,6 +121,7 @@ import {
   GetPolishUrl,
 } from "@/config.ts";
 import { Base64 } from "js-base64";
+import { useEditorStore } from "@/stores/editor.ts";
 
 const lowlight = createLowlight();
 lowlight.register({html, ts, css, js});
@@ -122,6 +142,8 @@ const allowOverride = ref(false);
 
 const userDocuments = ref<string[]>([]);
 const currentDocument = ref("");
+
+const editorStore = useEditorStore();
 
 let selection: any;
 
@@ -243,8 +265,6 @@ const loadDocument = (title: string) => {
   });
 };
 
-const editorStore = useEditorStore();
-
 const loadDocumentList = () => {
   api.get(GetDocumentListUrl)
     .then(res => {
@@ -253,9 +273,6 @@ const loadDocumentList = () => {
         userDocuments.value.push(doc);
       });
     });
-
-  ElMessage.primary(`List updated: ${userDocuments.value}`);
-  console.log(userDocuments.value);
 };
 
 loadDocumentList();
@@ -298,6 +315,8 @@ const loadHeadings = () => {
 
 // 使用ref创建可变的响应式引用
 // 编辑器初始化
+const uploadDialogVisible = ref(false);
+
 const editor = useEditor({
   content: ``,
   extensions: [
@@ -306,6 +325,7 @@ const editor = useEditor({
         levels: [1, 2, 3, 4, 5],
       },
     }),
+    Image,
     Underline,
     TaskList,
     TaskItem,
@@ -396,6 +416,18 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
+.upload-dialog {
+  .el-dialog__body {
+    padding: 0;
+  }
+
+  .main-body {
+    padding: 20px;
+    height: auto;
+    background: #1a1b1e;
+  }
+}
+
 b {
   font-weight: bold;
 }
