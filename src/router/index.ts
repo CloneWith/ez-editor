@@ -7,19 +7,8 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: () => import("@/views/ImageUpload/index.vue"),
-      meta: {requiresAuth: true},
-    },
-    {
-      path: "/about",
-      name: "about",
-      component: () => import("../views/AboutView.vue"),
-    },
-    {
-      path: "/upload",
-      name: "upload",
-      component: () => import("@/views/ImageUpload/index.vue"),
-      meta: {requiresAuth: true},
+      component: () => import("@/views/HomePage/index.vue"),
+      meta: {requiresAuth: false},
     },
     {
       path: "/editor",
