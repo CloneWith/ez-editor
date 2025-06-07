@@ -235,6 +235,7 @@ const saveEditorContent = () => {
       title: documentTitle.value.trim(),
     }).then(() => {
       saveSuccessful.value = true;
+      loadDocumentList();
     }).catch((err) => {
       console.error("Error saving document", err);
       saveSuccessful.value = false;
@@ -276,7 +277,7 @@ const loadDocument = (title: string) => {
   });
 };
 
-const loadDocumentList = () => {
+const loadDocumentList = (removeInvalid: boolean = false) => {
   api.get(GetDocumentListUrl)
     .then(res => {
       userDocuments.value = [];
@@ -285,7 +286,7 @@ const loadDocumentList = () => {
       });
 
       // 如果当前文档不在列表中，清空当前文档
-      if (documentTitle.value && !userDocuments.value.includes(documentTitle.value)) {
+      if (removeInvalid && documentTitle.value && !userDocuments.value.includes(documentTitle.value)) {
         documentTitle.value = "";
         editor.value?.commands.clearContent();
       }
@@ -304,7 +305,7 @@ const handleDeleteDocument = (title: string) => {
       title: title,
     }).then(() => {
       ElMessage.success("文档删除成功");
-      loadDocumentList();
+      loadDocumentList(true);
 
       // 如果删除的是当前文档，清空编辑器
       if (documentTitle.value === title) {
