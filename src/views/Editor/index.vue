@@ -1,6 +1,10 @@
 <template>
   <el-container ref="fileContent" class="main">
-    <el-aside class="sidebar"></el-aside>
+    <el-aside class="sidebar">
+      <h2>文档列表</h2>
+      <DocumentCard v-for="(item, index) in userDocuments.values()" :key="index" :text="item"
+                    @click="loadDocument"/>
+    </el-aside>
     <el-main class="editor">
       <el-container class="editor_card">
         <el-header class="top_toolbar" height="auto">
@@ -41,6 +45,21 @@
       <Outline/>
     </el-aside>
   </el-container>
+  <el-dialog
+    v-model="overrideDialogVisible"
+    title="警告"
+    width="500"
+  >
+    <span>当前编辑器内容还未保存，切换文档后，未保存的更改将会丢失。确定吗？</span>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="overrideDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="overrideDialogVisible = false">
+          确定
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -60,7 +79,7 @@ import BulletList from "@tiptap/extension-bullet-list";
 import Highlight from "@tiptap/extension-highlight";
 import CharacterCount from "@tiptap/extension-character-count";
 
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElDialog, ElMessage, ElMessageBox } from "element-plus";
 
 // Code Highlight
 import css from "highlight.js/lib/languages/css";
@@ -71,11 +90,17 @@ import { createLowlight } from "lowlight";
 
 import EditorMenu from "./EditorMenu/index.vue";
 import Outline from "./Outline/index.vue";
+import DocumentCard from "./DocumentCard/index.vue";
 
 import { useEditorStore } from "@/stores/editor";
-import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 import api from "@/utils/api.ts";
-import { DocumentUploadUrl, GetContinuationUrl, GetPolishUrl } from "@/config.ts";
+import {
+  DocumentUploadUrl,
+  GetContinuationUrl,
+  GetDocumentListUrl,
+  GetDocumentUrl,
+  GetPolishUrl,
+} from "@/config.ts";
 import { Base64 } from "js-base64";
 
 const lowlight = createLowlight();
@@ -92,6 +117,10 @@ const saveTimer = ref<NodeJS.Timeout>();
 
 const saving = ref(false);
 const saveSuccessful = ref(true);
+const overrideDialogVisible = ref(false);
+
+const userDocuments = ref<string[]>([]);
+const currentDocument = ref("");
 
 let selection: any;
 
@@ -179,9 +208,44 @@ const saveEditorContent = () => {
   }
 
   saving.value = false;
+  loadDocumentList();
+};
+
+const loadDocument = (title: string) => {
+  api.get(GetDocumentUrl, {
+    params: {
+      title: title,
+    },
+  }).then((res) => {
+    if (res.data.success === true) {
+      editor.value?.commands.setContent(res.data.content);
+    } else {
+      ElMessage.error("文档加载失败...");
+    }
+
+    if (saveSuccessful.value === false || saving.value === true) {
+      ElMessageBox.alert(res.data.message, "AI<UNK>");
+    }
+  });
 };
 
 const editorStore = useEditorStore();
+
+const loadDocumentList = () => {
+  api.get(GetDocumentListUrl)
+    .then(res => {
+      userDocuments.value = [];
+      res.data.documents.forEach((doc: string) => {
+        userDocuments.value.push(doc);
+      });
+    });
+
+  ElMessage.primary(`List updated: ${userDocuments.value}`);
+  console.log(userDocuments.value);
+};
+
+loadDocumentList();
+
 // 加载headings
 const loadHeadings = () => {
   const headings = [] as any[];
@@ -228,7 +292,6 @@ const editor = useEditor({
         levels: [1, 2, 3, 4, 5],
       },
     }),
-    BubbleMenu,
     Underline,
     TaskList,
     TaskItem,

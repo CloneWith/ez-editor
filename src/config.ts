@@ -9,6 +9,8 @@ export const LoginUrl = "login";
 export const RegisterUrl = "register";
 export const ImageUploadUrl = "upload_images";
 export const UserAddUrl = "add_user";
+export const GetDocumentListUrl = "get_docs";
+export const GetDocumentUrl = "get_doc";
 
 export const GetPolishUrl = "get_polish";
 export const GetContinuationUrl = "get_continuation";
