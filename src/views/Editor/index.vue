@@ -127,7 +127,8 @@ import {
   GetContinuationUrl,
   GetDocumentListUrl,
   GetDocumentUrl,
-  GetPolishUrl, RemoveDocumentUrl,
+  GetPolishUrl,
+  RemoveDocumentUrl,
 } from "@/config.ts";
 import { Base64 } from "js-base64";
 import { useEditorStore } from "@/stores/editor.ts";
@@ -291,13 +292,13 @@ const loadDocumentList = () => {
     });
 };
 
-loadDocumentList()
+loadDocumentList();
 
 const handleDeleteDocument = (title: string) => {
-  ElMessageBox.confirm(`确定要删除文档 "${title}" 吗?`, '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
+  ElMessageBox.confirm(`确定要删除文档 "${title}" 吗?`, "警告", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
   }).then(() => {
     api.postForm(RemoveDocumentUrl, {
       title: title,
@@ -409,14 +410,18 @@ onBeforeUnmount(() => {
 <style>
 .main {
   height: 100vh;
-  align-content: center;
+  display: flex;
+  place-items: center;
+  margin: 0 auto;
+  min-width: 600px;
   overflow: hidden;
 }
 
 .sidebar {
   height: 100%;
-  width: 20%;
-  min-width: 64px;
+  width: 240px;
+  min-width: 240px;
+  flex-shrink: 0;
 }
 
 .user-info {
@@ -431,17 +436,17 @@ onBeforeUnmount(() => {
 
 .editor {
   height: 100%;
-  min-width: 300px;
+  flex-grow: 1;
+  padding: 0 20px;
 }
 
 .editor_card {
   position: relative;
-  width: 95%;
+  width: 100%;
   height: 95%;
-  left: 2.5%;
-  top: 2.5%;
+  margin: 10px auto;
   display: grid;
-  grid-template-rows: auto 90% auto;
+  grid-template-rows: auto 1fr auto;
   border: 1px solid #4f5c5765;
 }
 
