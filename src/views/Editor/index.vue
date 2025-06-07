@@ -15,6 +15,9 @@
         <el-button @click="userStore.logout()">退出登录</el-button>
       </div>
       <h2>文档列表</h2>
+      <el-button @click="loadDocumentList" icon="Refresh">
+        Refresh
+      </el-button>
       <DocumentCard
         v-for="(item, index) in userDocuments.values()"
         :key="index"
