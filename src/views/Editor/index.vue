@@ -219,6 +219,8 @@ const loadDocument = (title: string) => {
   }).then((res) => {
     if (res.data.success === true) {
       editor.value?.commands.setContent(res.data.content);
+      documentTitle.value = res.data.title;
+      loadHeadings();
     } else {
       ElMessage.error("文档加载失败...");
     }
