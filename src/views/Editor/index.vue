@@ -114,13 +114,15 @@ const polish = () => {
     const tpcard1 = {title: "AI润色", cont: historyString, review: res.data};
     aiList.value.push(tpcard1);
 
-    if (res.data.answer) {
+    if (res.data.success === true) {
       aiPolishContent.value = res.data.answer;
       ElMessageBox.alert(res.data.answer, "AI润色");
+    } else {
+      ElMessage.error(`获取润色结果失败 (${res.data.message})`);
     }
 
     aiLoading.value = false;
-  }).then((err) => {
+  }).catch((err) => {
     console.error("Error getting continuation", err);
     ElMessage.error("获取润色结果失败...");
     aiLoading.value = false;
@@ -135,9 +137,11 @@ const continuation = () => {
   }).then((res) => {
     console.log(res.data);
 
-    if (res.data.answer) {
+    if (res.data.success === true) {
       aiContinuationContent.value = res.data.answer;
       ElMessageBox.alert(res.data.answer, "AI续写");
+    } else {
+      ElMessage.error(`获取续写结果失败 (${res.data.message})`);
     }
 
     aiLoading.value = false;
