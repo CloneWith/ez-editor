@@ -12,8 +12,8 @@
     </el-dialog>
     <el-aside class="sidebar">
       <h2>文档列表</h2>
-      <DocumentCard v-for="(item, index) in userDocuments.values()" :key="index" :text="item"
-                    @click="loadDocument"/>
+      <DocumentCard v-for="(item, index) in userDocuments.values()" :key="index" :currentDocument="documentTitle"
+                    :text="item" @click="loadDocument"/>
     </el-aside>
     <el-main class="editor">
       <el-container class="editor_card">
@@ -98,7 +98,7 @@ import OrderedList from "@tiptap/extension-ordered-list";
 import BulletList from "@tiptap/extension-bullet-list";
 import Highlight from "@tiptap/extension-highlight";
 import CharacterCount from "@tiptap/extension-character-count";
-import Image from '@tiptap/extension-image'
+import Image from "@tiptap/extension-image";
 
 import { ElDialog, ElMessage, ElMessageBox } from "element-plus";
 
@@ -141,7 +141,6 @@ const overrideDialogVisible = ref(false);
 const allowOverride = ref(false);
 
 const userDocuments = ref<string[]>([]);
-const currentDocument = ref("");
 
 const editorStore = useEditorStore();
 

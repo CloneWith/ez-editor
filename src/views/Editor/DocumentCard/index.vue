@@ -1,5 +1,6 @@
 <template>
   <div
+    :class="{ 'active-card': props.currentDocument === props.text }"
     class="document-card"
     @click="handleClick"
   >
@@ -17,14 +18,16 @@ const props = defineProps<{
   text: string
   icon?: string
   level?: number
+  currentDocument?: string
 }>();
 
 const emit = defineEmits<{
-  (e: 'click', text: string): void
+  (e: "click", text: string): void
 }>();
 
+
 const handleClick = () => {
-  emit('click', props.text);
+  emit("click", props.text);
 };
 </script>
 
@@ -38,10 +41,14 @@ const handleClick = () => {
   transition: all 0.2s ease;
   border: 1px solid transparent;
 
-  &:hover {
+  &:hover,
+  &.active-card {
     background: rgba(white, 0.2);
     border-color: var(--el-color-primary);
-    box-shadow: 0 0 0 1px var(--el-color-primary);
+  }
+
+  &.active-card {
+    background: rgba(var(--el-color-primary-rgb), 0.3);
   }
 
   .card-content {
