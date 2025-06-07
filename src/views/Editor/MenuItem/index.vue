@@ -15,9 +15,9 @@
 import remixiconUrl from 'remixicon/fonts/remixicon.symbol.svg'
 
 const props = defineProps<{
-  icon: string
-  title: string
-  action: Function
+  icon?: string
+  title?: string
+  action?: Function
   isActive?: Function
 }>()
 </script>

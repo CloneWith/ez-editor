@@ -1,16 +1,18 @@
 <template>
-  <template v-for="(item, index) in items" class="menu">
-    <div
-      v-if="item.type === 'divider'"
-      :key="`divider${index}`"
-      class="divider"
-    />
-    <MenuItem
-      v-else
-      :key="index"
-      v-bind="item"
-    />
-  </template>
+  <div>
+    <template v-for="(item, index) in items" class="menu">
+      <div
+        v-if="item.type === 'divider'"
+        :key="`divider${index}`"
+        class="divider"
+      />
+      <MenuItem
+        v-else
+        :key="index"
+        v-bind="item"
+      />
+    </template>
+  </div>
 </template>
 
 <script lang="ts" setup>

@@ -15,7 +15,7 @@
         <el-button @click="userStore.logout()">退出登录</el-button>
       </div>
       <h2>文档列表</h2>
-      <el-button @click="loadDocumentList" icon="Refresh">
+      <el-button icon="Refresh" @click="loadDocumentList">
         Refresh
       </el-button>
       <DocumentCard
@@ -31,26 +31,30 @@
       <el-container class="editor_card">
         <el-header class="top_toolbar" height="auto">
           <EditorMenu :editor="editor"/>
-          <el-button :disabled="historyString === ''" :loading="aiLoading" icon="Brush"
-                     @click="polish">
-            润色
-          </el-button>
-          <el-button :disabled="historyString === ''" :loading="aiLoading" icon="EditPen"
-                     @click="continuation">
-            续写
-          </el-button>
-          <el-button
-            :icon="Upload"
-            class="upload-btn"
-            type="primary"
-            @click="uploadDialogVisible = true"
-          >
-            上传图片
-          </el-button>
+          <div>
+            <el-button :disabled="historyString === ''" :loading="aiLoading" icon="Brush"
+                       @click="polish">
+              润色
+            </el-button>
+            <el-button :disabled="historyString === ''" :loading="aiLoading" icon="EditPen"
+                       @click="continuation">
+              续写
+            </el-button>
+            <el-button
+              :icon="Upload"
+              class="upload-btn"
+              type="primary"
+              @click="uploadDialogVisible = true"
+            >
+              上传图片
+            </el-button>
+          </div>
+          <el-input v-model="documentTitle" :onchange="saveEditorContent" placeholder="文档标题"
+                    size="large"/>
         </el-header>
 
         <el-main class="edit_content">
-          <el-input v-model="documentTitle" :onchange="saveEditorContent" placeholder="文档标题"/>
+
           <editor-content
             :editor="editor"
             @select="onTextSelection"
@@ -452,11 +456,16 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-rows: auto 1fr auto;
   border: 1px solid #4f5c5765;
+  border-radius: 5px;
 }
 
 .top_toolbar {
-  border-bottom: 1px dashed #9ca19f65;
-  align-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+  gap: 5px;
 }
 
 .bottom_bar {
@@ -473,6 +482,7 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   height: 100%;
+  gap: 10px;
 }
 </style>
 
