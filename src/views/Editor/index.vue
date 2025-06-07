@@ -14,7 +14,9 @@
             续写
           </el-button>
         </el-header>
+
         <el-main class="edit_content">
+          <el-input v-model="documentTitle" :onchange="saveEditorContent" placeholder="文档标题"/>
           <editor-content
             :editor="editor"
             @select="onTextSelection"
@@ -74,10 +76,12 @@ import { useEditorStore } from "@/stores/editor";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 import api from "@/utils/api.ts";
 import { DocumentUploadUrl, GetContinuationUrl, GetPolishUrl } from "@/config.ts";
+import { Base64 } from "js-base64";
 
 const lowlight = createLowlight();
 lowlight.register({html, ts, css, js});
 
+const documentTitle = ref("");
 const aiList = ref([]);
 const aiLoading = ref(false);
 const aiPolishContent = ref("");
@@ -152,14 +156,20 @@ const onTextSelection = () => {
 };
 
 const saveEditorContent = () => {
+  if (editor.value === undefined || documentTitle.value.trim() === "") {
+    saving.value = false;
+    saveSuccessful.value = false;
+    return;
+  }
+
   saving.value = true;
-  const content = editor.value?.getJSON();
+
+  const content = Base64.encode(editor.value.getHTML());
 
   if (content != null) {
     api.postForm(DocumentUploadUrl, {
       document: content,
-      // TODO
-      title: "Test title",
+      title: documentTitle.value.trim(),
     }).then(() => {
       saveSuccessful.value = true;
     }).catch((err) => {
