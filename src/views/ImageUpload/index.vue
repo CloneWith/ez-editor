@@ -1,9 +1,6 @@
 <template>
   <div class="main-body">
-    <div v-if="userStore.isLoggedIn" class="user-info">
-      <span>欢迎，{{ userStore.userInfo?.username }}</span>
-      <el-button type="text" @click="handleLogout">退出登录</el-button>
-    </div>
+
     <h1 class="head-title">首页</h1>
     <el-alert
       :class="backendReachable ? 'hide-box' : 'show-box'"
@@ -168,9 +165,7 @@ const beforeRemove = () => {
   });
 };
 
-const handleLogout = () => {
-  userStore.logout();
-};
+
 
 const uploadImage = (onSuccess: (Function | undefined) = undefined) => {
   if (!userStore.isLoggedIn) return;
@@ -219,16 +214,6 @@ const insertImageToEditor = () => {
 </script>
 
 <style scoped>
-.user-info {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .main-body {
   position: relative;
   display: flex;

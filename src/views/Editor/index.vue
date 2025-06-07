@@ -1,6 +1,5 @@
 <template>
   <el-container ref="fileContent" class="main">
-
     <!-- 图片上传对话框 -->
     <el-dialog
       v-model="uploadDialogVisible"
@@ -11,6 +10,10 @@
       <HomePage/>
     </el-dialog>
     <el-aside class="sidebar">
+      <div v-if="userStore.isLoggedIn" class="user-info">
+        <span>欢迎，<b>{{ userStore.userInfo?.username }}</b></span>
+        <el-button @click="userStore.logout()">退出登录</el-button>
+      </div>
       <h2>文档列表</h2>
       <DocumentCard v-for="(item, index) in userDocuments.values()" :key="index" :currentDocument="documentTitle"
                     :text="item" @click="loadDocument"/>
@@ -122,6 +125,7 @@ import {
 } from "@/config.ts";
 import { Base64 } from "js-base64";
 import { useEditorStore } from "@/stores/editor.ts";
+import { useUserStore } from "@/stores/user.ts";
 
 const lowlight = createLowlight();
 lowlight.register({html, ts, css, js});
@@ -143,6 +147,7 @@ const allowOverride = ref(false);
 const userDocuments = ref<string[]>([]);
 
 const editorStore = useEditorStore();
+const userStore = useUserStore();
 
 let selection: any;
 
@@ -374,6 +379,16 @@ onBeforeUnmount(() => {
   height: 100%;
   width: 20%;
   min-width: 64px;
+}
+
+.user-info {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .editor {
