@@ -16,3 +16,4 @@ export const GetPolishUrl = "get_polish";
 export const GetContinuationUrl = "get_continuation";
 
 export const DocumentUploadUrl = "upload_doc";
+export const RemoveDocumentUrl = "remove_doc";

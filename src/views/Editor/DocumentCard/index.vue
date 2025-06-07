@@ -1,8 +1,7 @@
 <template>
   <div
     :class="{ 'active-card': props.currentDocument === props.text }"
-    class="document-card"
-    @click="handleClick"
+    class="document-card" @click="handleClick"
   >
     <div class="card-content">
       <el-icon v-if="icon">
@@ -10,10 +9,19 @@
       </el-icon>
       <span>{{ text }}</span>
     </div>
+    <el-button
+      class="delete-btn"
+      icon="Delete"
+      type="danger"
+      size="small"
+      circle
+      @click.stop="handleDelete"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
+
 const props = defineProps<{
   text: string
   icon?: string
@@ -23,11 +31,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "click", text: string): void
+  (e: "delete", text: string): void
 }>();
-
 
 const handleClick = () => {
   emit("click", props.text);
+};
+
+const handleDelete = () => {
+  emit("delete", props.text);
 };
 </script>
 
@@ -55,6 +67,25 @@ const handleClick = () => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-grow: 1;
+  }
+
+  position: relative;
+  
+  .delete-btn {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover .delete-btn {
+    opacity: 1;
+  }
+
+  .card-content {
+    padding-right: 30px;
   }
 }
 </style>

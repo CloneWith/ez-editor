@@ -15,8 +15,14 @@
         <el-button @click="userStore.logout()">退出登录</el-button>
       </div>
       <h2>文档列表</h2>
-      <DocumentCard v-for="(item, index) in userDocuments.values()" :key="index" :currentDocument="documentTitle"
-                    :text="item" @click="loadDocument"/>
+      <DocumentCard
+        v-for="(item, index) in userDocuments.values()"
+        :key="index"
+        :currentDocument="documentTitle"
+        :text="item"
+        @click="loadDocument"
+        @delete="handleDeleteDocument"
+      />
     </el-aside>
     <el-main class="editor">
       <el-container class="editor_card">
@@ -121,7 +127,7 @@ import {
   GetContinuationUrl,
   GetDocumentListUrl,
   GetDocumentUrl,
-  GetPolishUrl,
+  GetPolishUrl, RemoveDocumentUrl,
 } from "@/config.ts";
 import { Base64 } from "js-base64";
 import { useEditorStore } from "@/stores/editor.ts";
@@ -276,10 +282,42 @@ const loadDocumentList = () => {
       res.data.documents.forEach((doc: string) => {
         userDocuments.value.push(doc);
       });
+
+      // 如果当前文档不在列表中，清空当前文档
+      if (documentTitle.value && !userDocuments.value.includes(documentTitle.value)) {
+        documentTitle.value = "";
+        editor.value?.commands.clearContent();
+      }
     });
 };
 
-loadDocumentList();
+loadDocumentList()
+
+const handleDeleteDocument = (title: string) => {
+  ElMessageBox.confirm(`确定要删除文档 "${title}" 吗?`, '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    api.postForm(RemoveDocumentUrl, {
+      title: title,
+    }).then(() => {
+      ElMessage.success("文档删除成功");
+      loadDocumentList();
+
+      // 如果删除的是当前文档，清空编辑器
+      if (documentTitle.value === title) {
+        documentTitle.value = "";
+        editor.value?.commands.clearContent();
+      }
+    }).catch(err => {
+      console.error("Error deleting document", err);
+      ElMessage.error("文档删除失败");
+    });
+  }).catch(() => {
+    // 用户取消删除
+  });
+};
 
 // 加载headings
 const loadHeadings = () => {
