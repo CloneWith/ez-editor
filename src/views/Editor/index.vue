@@ -48,7 +48,15 @@
         </el-main>
 
         <el-footer class="bottom_bar">
-          字数统计:
+          <el-icon :class="saving ? 'is-loading' : ''">
+            <Loading v-if="saving"/>
+            <SuccessFilled v-else-if="saveSuccessful"/>
+            <WarningFilled v-else/>
+          </el-icon>
+          {{ saving ? "保存中" : saveSuccessful ? "已保存" : "未保存" }}
+          <el-icon>
+            <Odometer/>
+          </el-icon>
           {{ editor?.storage.characterCount.characters() }}
         </el-footer>
       </el-container>
@@ -60,7 +68,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { onBeforeUnmount, ref } from "vue";
 
 // TipTap editor and extensions
 import { EditorContent, useEditor } from "@tiptap/vue-3";
@@ -91,7 +99,7 @@ import Outline from "./Outline/index.vue";
 import { useEditorStore } from "@/stores/editor";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 import api from "@/utils/api.ts";
-import { GetContinuationUrl, GetPolishUrl } from "@/config.ts";
+import { DocumentUploadUrl, GetContinuationUrl, GetPolishUrl } from "@/config.ts";
 
 const lowlight = createLowlight();
 lowlight.register({html, ts, css, js});
@@ -102,6 +110,11 @@ const aiPolishContent = ref("");
 const aiContinuationContent = ref("");
 const fileContent = ref(null);
 const historyString = ref("");
+const saveTimer = ref<NodeJS.Timeout>();
+
+const saving = ref(false);
+const saveSuccessful = ref(true);
+
 let selection: any;
 
 // Use AI for text polishment
@@ -162,6 +175,26 @@ const onTextSelection = () => {
   } else {
     historyString.value = "";
   }
+};
+
+const saveEditorContent = () => {
+  saving.value = true;
+  const content = editor.value?.getJSON();
+
+  if (content != null) {
+    api.postForm(DocumentUploadUrl, {
+      document: content,
+      // TODO
+      title: "Test title",
+    }).then(() => {
+      saveSuccessful.value = true;
+    }).catch((err) => {
+      console.error("Error saving document", err);
+      saveSuccessful.value = false;
+    });
+  }
+
+  saving.value = false;
 };
 
 const editorStore = useEditorStore();
@@ -227,8 +260,12 @@ const editor = useEditor({
     }),
   ],
   onUpdate() {
-    loadHeadings();
-    editorStore.setEditorInstance(editor.value);
+    clearTimeout(saveTimer.value);
+    saveTimer.value = setTimeout(() => {
+      saveEditorContent();
+      loadHeadings();
+      editorStore.setEditorInstance(editor.value);
+    }, 500);
   },
   onCreate() {
     loadHeadings();
@@ -238,6 +275,10 @@ const editor = useEditor({
     onTextSelection();
   },
   injectCSS: false,
+});
+
+onBeforeUnmount(() => {
+  clearTimeout(saveTimer.value);
 });
 
 </script>
@@ -281,10 +322,8 @@ const editor = useEditor({
   min-height: 32px;
   height: 100%;
   width: 100%;
-  display: grid;
-  grid-template-columns: 100%;
-  grid-template-rows: 100%;
-  justify-items: center;
+  display: flex;
+  column-gap: 5px;
   align-items: center;
 }
 

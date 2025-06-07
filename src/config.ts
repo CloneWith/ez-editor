@@ -12,3 +12,5 @@ export const UserAddUrl = "add_user";
 
 export const GetPolishUrl = "get_polish";
 export const GetContinuationUrl = "get_continuation";
+
+export const DocumentUploadUrl = "upload_doc";
